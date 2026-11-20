@@ -50,13 +50,13 @@ function SheetContent({ id, onClose }: { id: number; onClose: () => void }) {
     <>
       <header className="sheet__head">
         <div className="sheet__head-top">
-          <span className="eyebrow">Solicitud #{id}</span>
+          <h2 className="sheet__title">{request?.applicantName ?? 'Cargando…'}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {request && <StatusBadge status={request.status} onBrand />}
             <button type="button" className="icon-btn icon-btn--light" onClick={onClose} aria-label="Cerrar"><Icon name="x" size={16} /></button>
           </div>
         </div>
-        <h2 className="sheet__title">{request?.applicantName ?? 'Cargando…'}</h2>
+        <p className="sheet__meta">Solicitud #{id}{request ? ` · registrada por ${request.ownerName}` : ''}</p>
         {request && (
           <div className="sheet__amount">
             <b className="tabular">{formatUSD(request.amountCents)}</b>
@@ -95,7 +95,6 @@ function Details({ request }: { request: CreditRequestDTO }) {
           <GroupTitle icon="user" title="Datos del solicitante" />
           <Row label="Solicitante" value={request.applicantName} />
           <Row label="DPI" value={<span className="mono">{request.documentId}</span>} />
-          <Row label="Registrada por" value={request.ownerName} />
           <Row label="Ingreso mensual" value={formatUSD(request.monthlyIncomeCents)} />
           <Row label="Fecha de registro" value={formatDateTime(request.createdAt)} />
         </section>
@@ -160,7 +159,7 @@ function BureauSection({ request }: { request: CreditRequestDTO }) {
         <motion.div className="bureau-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, ease: easeOut }}>
           <ScoreGauge score={bureau.score} rating={bureau.rating} size={76} />
           <div className="bureau-panel__info">
-            <span className="eyebrow">Score crediticio</span>
+            <span className="muted small">Score crediticio</span>
             <span className="bureau-panel__score tabular">{bureau.score} <span className="muted small">/ 850</span></span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className={`grade grade--${gradeOf(bureau.rating)}`}>{gradeOf(bureau.rating)}</span>

@@ -20,8 +20,8 @@ export function Layout() {
           <img src="/logo-white.png" alt="Cooperativa Guadalupana" className="brand-logo" />
           <nav className="nav" aria-label="Principal">
             {links.map((l) => (
-              <NavLink key={l.to} to={l.to} end>
-                <Icon name={l.icon} size={16} /> {l.label}
+              <NavLink key={l.to} to={l.to} end title={l.label}>
+                <Icon name={l.icon} size={16} /> <span className="nav__label">{l.label}</span>
               </NavLink>
             ))}
           </nav>

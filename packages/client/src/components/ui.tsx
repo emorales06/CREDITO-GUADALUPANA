@@ -103,8 +103,8 @@ export function BureauIndicator({ bureau }: { bureau: BureauResultDTO }) {
       );
     case 'COMPLETADO':
       return (
-        <span className="bureau">
-          <ScoreGauge score={bureau.score ?? 0} rating={bureau.rating} size={34} />
+        <span className="score-chip" title={bureau.rating ?? undefined}>
+          <span className="tabular">{bureau.score}</span>
           <span className={`grade grade--${gradeOf(bureau.rating)}`}>{gradeOf(bureau.rating)}</span>
         </span>
       );

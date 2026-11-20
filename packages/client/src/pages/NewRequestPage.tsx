@@ -102,7 +102,6 @@ export function NewRequestPage() {
     <main className="page">
       <div className="page-head">
         <div>
-          <span className="eyebrow">Solicitud de desembolso</span>
           <h1 className="large-title">Nueva solicitud</h1>
           <p>Complete los datos; la simulación financiera se actualiza mientras escribe.</p>
         </div>
@@ -111,7 +110,7 @@ export function NewRequestPage() {
       <div className="split">
         <form className="card card-pad grid" onSubmit={onSubmit} noValidate style={{ gap: 20 }}>
           <div className="form-grid">
-            <div className="form-section full"><span className="form-section__num">1</span> Datos del solicitante</div>
+            <h2 className="form-section full">Datos del solicitante</h2>
             <div className="field full">
               <label htmlFor="applicantName">Nombre del solicitante</label>
               <div className="input-wrap">
@@ -143,7 +142,7 @@ export function NewRequestPage() {
               </div>
             )}
 
-            <div className="form-section full" style={{ marginTop: 6 }}><span className="form-section__num">2</span> Condiciones del crédito</div>
+            <h2 className="form-section full" style={{ marginTop: 8 }}>Condiciones del crédito</h2>
             <div className="field">
               <label htmlFor="monthlyIncome">Ingreso mensual declarado</label>
               <div className="input-wrap">
@@ -190,10 +189,12 @@ export function NewRequestPage() {
 
         <aside className="card sticky" aria-label="Simulación financiera">
           <div className="card-pad" style={{ paddingBottom: 16 }}>
-            <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="calc" size={14} /> Simulación financiera</div>
-            <div className="title-2" style={{ margin: '4px 0 16px' }}>
-              {amountCents > 0 ? `${formatUSD(amountCents)} a ${form.termMonths} meses` : 'Ingrese un monto para simular'}
-            </div>
+            <h2 className="title-2" style={{ margin: '0 0 4px' }}>
+              {amountCents > 0 ? `Simulación: ${formatUSD(amountCents)} a ${form.termMonths} meses` : 'Simulación financiera'}
+            </h2>
+            <p className="muted small" style={{ margin: '0 0 16px' }}>
+              {amountCents > 0 ? 'Cuota fija con interés del 1.5 % mensual.' : 'Ingrese un monto para ver la cuota y la tabla de pagos.'}
+            </p>
             <AmortizationSummary schedule={schedule} />
           </div>
           {schedule.rows.length > 0 && <AmortizationTable schedule={schedule} />}

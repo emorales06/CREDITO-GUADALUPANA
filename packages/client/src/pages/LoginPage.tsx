@@ -74,8 +74,7 @@ export function LoginPage() {
 
       <section className="login__form-side">
         <motion.div className="card login__card" initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={spring}>
-          <span className="eyebrow">Bienvenido</span>
-          <h2 className="large-title" style={{ margin: '4px 0 6px' }}>Iniciar sesión</h2>
+          <h2 className="large-title" style={{ margin: '0 0 6px' }}>Iniciar sesión</h2>
           <p className="muted" style={{ margin: '0 0 22px' }}>Ingrese sus credenciales para continuar.</p>
 
           <form onSubmit={onSubmit} className="grid" style={{ gap: 14 }} noValidate>

@@ -20,7 +20,6 @@ export function AuditPage() {
     <main className="page">
       <div className="page-head">
         <div>
-          <span className="eyebrow">Trazabilidad</span>
           <h1 className="large-title">Registro de auditoría</h1>
           <p>Cada transición de estado queda registrada de forma inmutable y aparece aquí en tiempo real.</p>
         </div>

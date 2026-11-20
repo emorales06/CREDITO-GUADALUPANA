@@ -30,7 +30,6 @@ export function MyRequestsPage() {
     <main className="page">
       <div className="page-head">
         <div>
-          <span className="eyebrow">Solicitante</span>
           <h1 className="large-title">Mis solicitudes</h1>
           <p>El estado y la consulta al buró se actualizan en tiempo real.</p>
         </div>
