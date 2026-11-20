@@ -6,9 +6,9 @@ import { spring } from './ui.tsx';
 export function AmortizationSummary({ schedule }: { schedule: AmortizationSchedule }) {
   return (
     <div className="summary">
-      <div>
+      <div className="summary__hero">
         <div className="eyebrow">Cuota mensual</div>
-        <div className="summary__value summary__value--hero tabular">{formatUSD(schedule.monthlyPaymentCents)}</div>
+        <div className="summary__value tabular">{formatUSD(schedule.monthlyPaymentCents)}</div>
       </div>
       <div>
         <div className="eyebrow">Total intereses</div>

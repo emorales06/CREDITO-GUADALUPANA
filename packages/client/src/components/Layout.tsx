@@ -1,29 +1,28 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { useServerEvents } from '../realtime/useServerEvents.ts';
-import { Icon } from './ui.tsx';
-
-const initials = (name: string) =>
-  name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+import { Icon, initials, type IconName } from './ui.tsx';
 
 export function Layout() {
   const { user, logout } = useAuth();
   const live = useServerEvents(user !== null);
   if (!user) return null;
 
-  const links =
+  const links: ReadonlyArray<{ to: string; label: string; icon: IconName }> =
     user.role === 'ANALISTA'
-      ? [{ to: '/panel', label: 'Panel' }, { to: '/auditoria', label: 'Auditoría' }]
-      : [{ to: '/solicitudes/nueva', label: 'Nueva solicitud' }, { to: '/solicitudes', label: 'Mis solicitudes' }];
+      ? [{ to: '/panel', label: 'Panel', icon: 'chart' }, { to: '/auditoria', label: 'Auditoría', icon: 'shield' }]
+      : [{ to: '/solicitudes/nueva', label: 'Nueva solicitud', icon: 'plus' }, { to: '/solicitudes', label: 'Mis solicitudes', icon: 'list' }];
 
   return (
     <>
       <header className="app-header">
         <div className="app-header__inner">
-          <img src="/logo.png" alt="Cooperativa Guadalupana" className="brand-logo" />
+          <img src="/logo-white.png" alt="Cooperativa Guadalupana" className="brand-logo" />
           <nav className="nav" aria-label="Principal">
             {links.map((l) => (
-              <NavLink key={l.to} to={l.to} end>{l.label}</NavLink>
+              <NavLink key={l.to} to={l.to} end>
+                <Icon name={l.icon} size={16} /> {l.label}
+              </NavLink>
             ))}
           </nav>
           <div className="header-right">
@@ -37,13 +36,16 @@ export function Layout() {
                 <div className="user-chip__role">{user.role === 'ANALISTA' ? 'Analista' : 'Solicitante'}</div>
               </div>
             </div>
-            <button type="button" className="icon-btn" onClick={() => void logout()} aria-label="Cerrar sesión" title="Cerrar sesión">
+            <button type="button" className="icon-btn icon-btn--light" onClick={() => void logout()} aria-label="Cerrar sesión" title="Cerrar sesión">
               <Icon name="logout" size={16} />
             </button>
           </div>
         </div>
       </header>
-      <Outlet />
+      <div className="shell">
+        <div className="hero-band" aria-hidden="true" />
+        <Outlet />
+      </div>
     </>
   );
 }

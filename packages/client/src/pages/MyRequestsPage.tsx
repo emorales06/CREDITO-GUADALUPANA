@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useRequests } from '../api/hooks.ts';
 import { RequestSheet } from '../components/RequestSheet.tsx';
 import { RequestsTable } from '../components/RequestsTable.tsx';
-import { Banner } from '../components/ui.tsx';
+import { Banner, Icon } from '../components/ui.tsx';
 
 export function useSelectedRequest(): [number | null, (id: number | null) => void] {
   const [params, setParams] = useSearchParams();
@@ -30,14 +30,20 @@ export function MyRequestsPage() {
     <main className="page">
       <div className="page-head">
         <div>
+          <span className="eyebrow">Solicitante</span>
           <h1 className="large-title">Mis solicitudes</h1>
-          <p className="muted">El estado y la consulta al buró se actualizan en tiempo real.</p>
+          <p>El estado y la consulta al buró se actualizan en tiempo real.</p>
         </div>
-        <Link to="/solicitudes/nueva" className="btn btn-primary" style={{ textDecoration: 'none' }}>Nueva solicitud</Link>
+        <Link to="/solicitudes/nueva" className="btn btn-light"><Icon name="plus" size={18} /> Nueva solicitud</Link>
       </div>
-      {error && <Banner tone="error">{error.message}</Banner>}
-      <section className="card">
-        <RequestsTable requests={data} loading={isLoading} onOpen={select} emptyText="Aún no ha registrado solicitudes." />
+      {error && <div style={{ marginBottom: 16 }}><Banner tone="error" title="No se pudieron cargar sus solicitudes">{error.message}</Banner></div>}
+      <section className="card" style={{ overflow: 'hidden' }}>
+        <div className="card-head">
+          <h2 className="title-3">Historial</h2>
+          <span className="muted small">{data ? `${data.length} solicitud${data.length === 1 ? '' : 'es'}` : ''}</span>
+        </div>
+        <RequestsTable requests={data} loading={isLoading} onOpen={select}
+          emptyTitle="Aún no ha registrado solicitudes" emptyText="Cree su primera solicitud de desembolso para verla aquí." />
       </section>
       <RequestSheet id={selected} onClose={close} />
     </main>

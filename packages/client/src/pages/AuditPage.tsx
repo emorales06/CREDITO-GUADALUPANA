@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAudit } from '../api/hooks.ts';
 import { RequestSheet } from '../components/RequestSheet.tsx';
-import { Banner, Icon, Spinner, StatusBadge } from '../components/ui.tsx';
+import { Banner, EmptyState, Icon, SkeletonRows, StatusBadge } from '../components/ui.tsx';
 import { useSelectedRequest } from './MyRequestsPage.tsx';
 
 export function AuditPage() {
@@ -20,19 +20,30 @@ export function AuditPage() {
     <main className="page">
       <div className="page-head">
         <div>
-          <h1 className="large-title">Auditoría</h1>
-          <p className="muted">Registro inmutable de cada transición de estado, en tiempo real.</p>
+          <span className="eyebrow">Trazabilidad</span>
+          <h1 className="large-title">Registro de auditoría</h1>
+          <p>Cada transición de estado queda registrada de forma inmutable y aparece aquí en tiempo real.</p>
         </div>
-        <input className="input" style={{ width: 260 }} placeholder="Filtrar por # solicitud o usuario" value={query}
-          onChange={(e) => setQuery(e.target.value)} aria-label="Filtrar auditoría" />
+        <div className="input-wrap" style={{ width: 300, maxWidth: '100%' }}>
+          <span className="lead-icon"><Icon name="search" size={18} /></span>
+          <input className="input" placeholder="Filtrar por # solicitud o usuario" value={query}
+            onChange={(e) => setQuery(e.target.value)} aria-label="Filtrar auditoría" />
+        </div>
       </div>
 
-      {error && <Banner tone="error">{error.message}</Banner>}
-      <section className="card">
+      {error && <div style={{ marginBottom: 16 }}><Banner tone="error" title="No se pudo cargar la auditoría">{error.message}</Banner></div>}
+      <section className="card" style={{ overflow: 'hidden' }}>
+        <div className="card-head">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="group__icon"><Icon name="shield" size={16} /></span>
+            <h2 className="title-3">Eventos</h2>
+          </div>
+          <span className="muted small">{entries.length} registro{entries.length === 1 ? '' : 's'} · solo lectura</span>
+        </div>
         {isLoading ? (
-          <div className="empty"><Spinner /></div>
+          <SkeletonRows cols={6} />
         ) : entries.length === 0 ? (
-          <div className="empty"><Icon name="inbox" /><div>Sin registros.</div></div>
+          <EmptyState icon="search" title="Sin registros">No hay eventos que coincidan con el filtro.</EmptyState>
         ) : (
           <div className="table-wrap">
             <table className="table">
@@ -50,10 +61,10 @@ export function AuditPage() {
                 <AnimatePresence initial={false}>
                   {entries.map((e) => (
                     <motion.tr key={e.id} layout="position"
-                      initial={{ opacity: 0, backgroundColor: 'rgba(52,199,89,0.14)' }}
-                      animate={{ opacity: 1, backgroundColor: 'rgba(52,199,89,0)' }}
-                      transition={{ duration: 1.2 }}>
-                      <td className="mono" style={{ whiteSpace: 'nowrap' }}>{e.timestamp}</td>
+                      initial={{ opacity: 0, backgroundColor: 'rgba(43,171,78,0.14)' }}
+                      animate={{ opacity: 1, backgroundColor: 'rgba(43,171,78,0)' }}
+                      transition={{ opacity: { duration: 0.25 }, backgroundColor: { duration: 1.6 } }}>
+                      <td className="mono muted" style={{ whiteSpace: 'nowrap' }}>{e.timestamp}</td>
                       <td>
                         <button type="button" className="btn btn-plain btn-sm" onClick={() => select(e.requestId)}>#{e.requestId}</button>
                       </td>

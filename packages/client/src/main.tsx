@@ -13,6 +13,8 @@ import { DashboardPage } from './pages/DashboardPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { MyRequestsPage } from './pages/MyRequestsPage.tsx';
 import { NewRequestPage } from './pages/NewRequestPage.tsx';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/montserrat';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -38,7 +40,7 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
-  if (loading) return <div className="login"><Spinner /></div>;
+  if (loading) return <div className="boot"><Spinner size={22} /></div>;
 
   return (
     <Routes>

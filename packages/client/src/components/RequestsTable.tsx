@@ -1,23 +1,17 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { formatUSD, type CreditRequestDTO } from '@guadalupana/shared';
-import { BureauIndicator, Icon, Spinner, StatusBadge, formatDate } from './ui.tsx';
+import { BureauIndicator, EmptyState, SkeletonRows, StatusBadge, easeOut, formatDate, initials } from './ui.tsx';
 
-export function RequestsTable({ requests, loading, onOpen, showOwner = false, emptyText }: {
+export function RequestsTable({ requests, loading, onOpen, showOwner = false, emptyTitle, emptyText }: {
   requests: CreditRequestDTO[] | undefined;
   loading: boolean;
   onOpen: (id: number) => void;
   showOwner?: boolean;
-  emptyText: string;
+  emptyTitle: string;
+  emptyText?: string;
 }) {
-  if (loading) return <div className="empty"><Spinner /></div>;
-  if (!requests?.length) {
-    return (
-      <div className="empty">
-        <Icon name="inbox" />
-        <div>{emptyText}</div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonRows cols={showOwner ? 7 : 6} />;
+  if (!requests?.length) return <EmptyState title={emptyTitle}>{emptyText}</EmptyState>;
 
   return (
     <div className="table-wrap">
@@ -40,16 +34,20 @@ export function RequestsTable({ requests, loading, onOpen, showOwner = false, em
           <AnimatePresence initial={false}>
             {requests.map((r) => (
               <motion.tr key={r.id} layout="position" className="clickable" tabIndex={0}
-                initial={{ opacity: 0, backgroundColor: 'rgba(4,50,98,0.08)' }}
-                animate={{ opacity: 1, backgroundColor: 'rgba(4,50,98,0)' }}
-                transition={{ duration: 0.8 }}
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.25, ease: easeOut }}
                 onClick={() => onOpen(r.id)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(r.id)}>
-                <td className="tabular muted">{r.id}</td>
-                <td style={{ fontWeight: 600 }}>{r.applicantName}</td>
+                <td className="cell-id tabular">{r.id}</td>
+                <td>
+                  <span className="cell-person">
+                    <span className="avatar hide-sm" aria-hidden="true">{initials(r.applicantName)}</span>
+                    {r.applicantName}
+                  </span>
+                </td>
                 <td className="mono muted hide-sm">{r.documentId}</td>
                 {showOwner && <td className="muted hide-sm">{r.ownerName}</td>}
-                <td className="num" style={{ fontWeight: 600 }}>{formatUSD(r.amountCents)}</td>
+                <td className="num cell-money">{formatUSD(r.amountCents)}</td>
                 <td className="num hide-sm">{r.termMonths} m</td>
                 <td className="num hide-sm">{formatUSD(r.monthlyPaymentCents)}</td>
                 <td><BureauIndicator bureau={r.bureau} /></td>

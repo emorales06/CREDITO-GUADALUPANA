@@ -15,7 +15,7 @@ import { useCreateRequest, useEligibility } from '../api/hooks.ts';
 import { ApiError } from '../api/client.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { AmortizationSummary, AmortizationTable } from '../components/AmortizationTable.tsx';
-import { Banner, Segmented, Spinner, useToast } from '../components/ui.tsx';
+import { Banner, Icon, Segmented, Spinner, useToast } from '../components/ui.tsx';
 
 interface FormState {
   applicantName: string;
@@ -89,7 +89,7 @@ export function NewRequestPage() {
     if (!validation.success || blocked) return;
     create.mutate(validation.data, {
       onSuccess: (request) => {
-        toast(`Solicitud #${request.id} registrada · consultando buró`);
+        toast(`Solicitud #${request.id} registrada`, 'ok', 'Estamos consultando el buró crediticio.');
         navigate(`/solicitudes?id=${request.id}`);
       },
       onError: (err) => {
@@ -102,30 +102,39 @@ export function NewRequestPage() {
     <main className="page">
       <div className="page-head">
         <div>
+          <span className="eyebrow">Solicitud de desembolso</span>
           <h1 className="large-title">Nueva solicitud</h1>
-          <p className="muted">Registre una solicitud de desembolso. La simulación se actualiza mientras escribe.</p>
+          <p>Complete los datos; la simulación financiera se actualiza mientras escribe.</p>
         </div>
       </div>
 
       <div className="split">
         <form className="card card-pad grid" onSubmit={onSubmit} noValidate style={{ gap: 20 }}>
           <div className="form-grid">
+            <div className="form-section full"><span className="form-section__num">1</span> Datos del solicitante</div>
             <div className="field full">
               <label htmlFor="applicantName">Nombre del solicitante</label>
-              <input id="applicantName" className="input" value={form.applicantName} autoComplete="name"
-                aria-invalid={errorFor('applicantName') ? true : undefined}
-                onChange={(e) => set('applicantName')(e.target.value)} onBlur={touch('applicantName')} />
-              {errorFor('applicantName') && <span className="error">{errorFor('applicantName')}</span>}
+              <div className="input-wrap">
+                <span className="lead-icon"><Icon name="user" size={18} /></span>
+                <input id="applicantName" className="input" value={form.applicantName} autoComplete="name"
+                  aria-invalid={errorFor('applicantName') ? true : undefined}
+                  onChange={(e) => set('applicantName')(e.target.value)} onBlur={touch('applicantName')} />
+              </div>
+              {errorFor('applicantName') && <span className="error"><Icon name="alert" size={13} /> {errorFor('applicantName')}</span>}
             </div>
 
             <div className="field full">
               <label htmlFor="documentId">Documento de identidad (DPI)</label>
-              <input id="documentId" className="input mono" value={form.documentId} inputMode="numeric" maxLength={13} placeholder="13 dígitos"
-                aria-invalid={errorFor('documentId') || blocked ? true : undefined}
-                onChange={(e) => set('documentId')(e.target.value.replace(/\D/g, ''))} onBlur={touch('documentId')} />
-              {errorFor('documentId') && <span className="error">{errorFor('documentId')}</span>}
-              {docValid && eligibility.isFetching && <span className="hint" style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Spinner /> Verificando historial…</span>}
-              {docValid && eligibility.data?.eligible && !eligibility.isFetching && <span className="hint" style={{ color: 'var(--green)' }}>✓ Sin solicitudes que bloqueen este documento</span>}
+              <div className="input-wrap">
+                <span className="lead-icon"><Icon name="file" size={18} /></span>
+                <input id="documentId" className="input mono" value={form.documentId} inputMode="numeric" maxLength={13} placeholder="13 dígitos"
+                  aria-invalid={errorFor('documentId') || blocked ? true : undefined}
+                  data-valid={docValid && eligibility.data?.eligible ? true : undefined}
+                  onChange={(e) => set('documentId')(e.target.value.replace(/\D/g, ''))} onBlur={touch('documentId')} />
+              </div>
+              {errorFor('documentId') && <span className="error"><Icon name="alert" size={13} /> {errorFor('documentId')}</span>}
+              {docValid && eligibility.isFetching && <span className="hint"><Spinner size={12} /> Verificando historial del documento…</span>}
+              {docValid && eligibility.data?.eligible && !eligibility.isFetching && <span className="hint hint--ok"><Icon name="check" size={13} strokeWidth={2.6} /> Sin solicitudes que bloqueen este documento</span>}
             </div>
 
             {blocked && (
@@ -134,6 +143,7 @@ export function NewRequestPage() {
               </div>
             )}
 
+            <div className="form-section full" style={{ marginTop: 6 }}><span className="form-section__num">2</span> Condiciones del crédito</div>
             <div className="field">
               <label htmlFor="monthlyIncome">Ingreso mensual declarado</label>
               <div className="input-wrap">
@@ -142,7 +152,7 @@ export function NewRequestPage() {
                   aria-invalid={errorFor('monthlyIncome') ? true : undefined}
                   onChange={(e) => set('monthlyIncome')(e.target.value)} onBlur={touch('monthlyIncome')} />
               </div>
-              {errorFor('monthlyIncome') && <span className="error">{errorFor('monthlyIncome')}</span>}
+              {errorFor('monthlyIncome') && <span className="error"><Icon name="alert" size={13} /> {errorFor('monthlyIncome')}</span>}
             </div>
 
             <div className="field">
@@ -154,7 +164,7 @@ export function NewRequestPage() {
                   onChange={(e) => { set('amount')(e.target.value); touch('amount')(); }} onBlur={touch('amount')} />
               </div>
               {errorFor('amount')
-                ? <span className="error">{errorFor('amount')}</span>
+                ? <span className="error"><Icon name="alert" size={13} /> {errorFor('amount')}</span>
                 : incomeCents > 0 && <span className="hint">Máximo permitido: {formatUSD(maxAmountForIncome(incomeCents))} ({MAX_AMOUNT_TO_INCOME_PERCENT}% del ingreso)</span>}
             </div>
 
@@ -167,11 +177,11 @@ export function NewRequestPage() {
           </div>
 
           {create.error && !(create.error instanceof ApiError && Object.keys(create.error.fields).length) && (
-            <Banner tone="error">{create.error.message}</Banner>
+            <Banner tone="error" title="No se pudo registrar">{create.error.message}</Banner>
           )}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={create.isPending || blocked}>
-            {create.isPending && <Spinner />} Enviar solicitud
+            {create.isPending ? <Spinner /> : <Icon name="check" size={18} strokeWidth={2.4} />} Enviar solicitud
           </button>
           <p className="muted small" style={{ margin: 0, textAlign: 'center' }}>
             Al enviarla se consultará automáticamente el buró crediticio.
@@ -180,7 +190,7 @@ export function NewRequestPage() {
 
         <aside className="card sticky" aria-label="Simulación financiera">
           <div className="card-pad" style={{ paddingBottom: 16 }}>
-            <div className="eyebrow">Simulación financiera</div>
+            <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="calc" size={14} /> Simulación financiera</div>
             <div className="title-2" style={{ margin: '4px 0 16px' }}>
               {amountCents > 0 ? `${formatUSD(amountCents)} a ${form.termMonths} meses` : 'Ingrese un monto para simular'}
             </div>
