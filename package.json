@@ -1,0 +1,25 @@
+{
+  "name": "credito-guadalupana",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de Aprobación de Créditos y Desembolsos — prueba técnica Full-Stack",
+  "workspaces": [
+    "packages/shared",
+    "packages/server",
+    "packages/client"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev -w @guadalupana/server\" \"npm run dev -w @guadalupana/client\"",
+    "build": "npm run build -w @guadalupana/client",
+    "start": "npm run build && npm run start -w @guadalupana/server",
+    "test": "npm run test -w @guadalupana/server",
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}

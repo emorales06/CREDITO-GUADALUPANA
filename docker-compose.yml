@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      SESSION_SECRET: ${SESSION_SECRET:-cambie-este-secreto-en-produccion}
+      SEED_DEMO_DATA: "true"
+      COOKIE_SECURE: "false" # usar "true" detrás de HTTPS
+    volumes:
+      - credit-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  credit-data:
