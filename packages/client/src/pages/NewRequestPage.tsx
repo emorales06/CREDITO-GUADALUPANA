@@ -133,7 +133,7 @@ export function NewRequestPage() {
               </div>
               {errorFor('documentId') && <span className="error"><Icon name="alert" size={13} /> {errorFor('documentId')}</span>}
               {docValid && eligibility.isFetching && <span className="hint"><Spinner size={12} /> Verificando historial del documento…</span>}
-              {docValid && eligibility.data?.eligible && !eligibility.isFetching && <span className="hint hint--ok"><Icon name="check" size={13} strokeWidth={2.6} /> Sin solicitudes que bloqueen este documento</span>}
+              {docValid && eligibility.data?.eligible && !eligibility.isFetching && <span className="hint hint--ok"><Icon name="check" size={13} /> Sin solicitudes que bloqueen este documento</span>}
             </div>
 
             {blocked && (
@@ -180,7 +180,7 @@ export function NewRequestPage() {
           )}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={create.isPending || blocked}>
-            {create.isPending ? <Spinner /> : <Icon name="check" size={18} strokeWidth={2.4} />} Enviar solicitud
+            {create.isPending ? <Spinner /> : <Icon name="check" size={18} />} Enviar solicitud
           </button>
           <p className="muted small" style={{ margin: 0, textAlign: 'center' }}>
             Al enviarla se consultará automáticamente el buró crediticio.

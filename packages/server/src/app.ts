@@ -6,12 +6,15 @@ import helmet from 'helmet';
 import type { Container } from './container.ts';
 import { mockBureauRouter } from './http/mock-bureau.ts';
 import { apiNotFound, errorHandler, requireJson } from './http/middleware.ts';
-import { apiRouter, authRouter } from './http/routes.ts';
+import { apiRouter, authRouter, publicRouter } from './http/routes.ts';
 
 export function createApp(c: Container) {
   const app = express();
   app.disable('x-powered-by');
-  app.use(helmet({ contentSecurityPolicy: { directives: { upgradeInsecureRequests: null } } }));
+  app.set('trust proxy', 'loopback');
+  app.use(helmet({ contentSecurityPolicy: { directives: { upgradeInsecureRequests: null, imgSrc: ["'self'", 'data:'] } } }));
+  // El tema admite un logo (máx. 300 KB): solo esa ruta acepta cuerpos grandes; el resto, 16 KB.
+  app.put('/api/admin/settings/theme', express.json({ limit: '512kb' }));
   app.use(express.json({ limit: '16kb' }));
   app.use(cookieParser());
 
@@ -21,6 +24,7 @@ export function createApp(c: Container) {
   app.use('/api/mock-bureau', mockBureauRouter(c.config.mockBureau));
   app.use('/api', requireJson);
   app.use('/api/auth', authRouter(c));
+  app.use('/api', publicRouter(c));
   app.use('/api', apiRouter(c));
   app.use('/api', apiNotFound);
 

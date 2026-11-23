@@ -14,7 +14,7 @@ import { ApiError } from '../api/client.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { AmortizationTable } from './AmortizationTable.tsx';
 import {
-  AttemptDots, Banner, ConfirmDialog, Icon, STATUS_GRADIENT, ScoreGauge, SkeletonRows, Spinner, StatusBadge,
+  AttemptDots, Banner, ConfirmDialog, Icon, STATUS_COLOR, ScoreGauge, SkeletonRows, Spinner, StatusBadge, Stripes,
   easeOut, formatDateTime, gradeOf, spring, useToast, type IconName,
 } from './ui.tsx';
 
@@ -49,6 +49,7 @@ function SheetContent({ id, onClose }: { id: number; onClose: () => void }) {
   return (
     <>
       <header className="sheet__head">
+        <Stripes />
         <div className="sheet__head-top">
           <h2 className="sheet__title">{request?.applicantName ?? 'Cargando…'}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -71,7 +72,6 @@ function SheetContent({ id, onClose }: { id: number; onClose: () => void }) {
   );
 }
 
-const TIMELINE_ICON: Record<string, IconName> = { CREADA: 'file', EN_REVISION: 'clock', APROBADA: 'check', RECHAZADA: 'x' };
 
 function Details({ request }: { request: CreditRequestDTO }) {
   const { user } = useAuth();
@@ -110,9 +110,7 @@ function Details({ request }: { request: CreditRequestDTO }) {
           <ol className="timeline">
             {(audit ?? []).slice().reverse().map((e, i) => (
               <motion.li key={e.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: easeOut, delay: i * 0.04 }}>
-                <span className="timeline__dot" style={{ ['--dot' as string]: STATUS_GRADIENT[e.toStatus] }}>
-                  <Icon name={TIMELINE_ICON[e.toStatus] ?? 'file'} size={12} strokeWidth={2.6} />
-                </span>
+                <span className="timeline__dot" style={{ ['--dot' as string]: STATUS_COLOR[e.toStatus] }} />
                 <div style={{ fontWeight: 650, fontSize: '0.875rem' }}>
                   {e.fromStatus ? `${STATUS_LABELS[e.fromStatus]} → ` : ''}{STATUS_LABELS[e.toStatus]}
                 </div>
@@ -131,7 +129,7 @@ function Details({ request }: { request: CreditRequestDTO }) {
 function GroupTitle({ icon, title, right }: { icon: IconName; title: string; right?: ReactNode }) {
   return (
     <div className="group__title">
-      <span className="group__icon"><Icon name={icon} size={16} /></span>
+      <Icon name={icon} size={18} />
       <span className="title-3">{title}</span>
       {right}
     </div>
@@ -139,7 +137,7 @@ function GroupTitle({ icon, title, right }: { icon: IconName; title: string; rig
 }
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
-  return <div className="row"><span className="label">{label}</span><span className="value">{value}</span></div>;
+  return <div className="row"><span className="rlabel">{label}</span><span className="value">{value}</span></div>;
 }
 
 const MAX_ATTEMPTS = 4;
@@ -160,7 +158,7 @@ function BureauSection({ request }: { request: CreditRequestDTO }) {
           <ScoreGauge score={bureau.score} rating={bureau.rating} size={76} />
           <div className="bureau-panel__info">
             <span className="muted small">Score crediticio</span>
-            <span className="bureau-panel__score tabular">{bureau.score} <span className="muted small">/ 850</span></span>
+            <span className="bureau-panel__score figure">{bureau.score} <span className="muted small">/ 850</span></span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className={`grade grade--${gradeOf(bureau.rating)}`}>{gradeOf(bureau.rating)}</span>
               <span className="small">{bureau.rating?.split(' · ')[1]}</span>
@@ -262,7 +260,7 @@ function AnalystActions({ request }: { request: CreditRequestDTO }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
               <span className="error">{reasonError}</span>
               <span className={`hint tabular${parsedReason.success ? ' hint--ok' : ''}`}>
-                {parsedReason.success && <Icon name="check" size={13} strokeWidth={2.6} />}
+                {parsedReason.success && <Icon name="check" size={13} />}
                 {reasonLength}/{REJECTION_REASON_MIN_LENGTH} mín.
               </span>
             </div>
@@ -274,7 +272,7 @@ function AnalystActions({ request }: { request: CreditRequestDTO }) {
         {rejecting ? (
           <>
             <button type="button" className="btn btn-tinted" onClick={() => setRejecting(false)} disabled={action.isPending}>Cancelar</button>
-            <button type="button" className="btn btn-danger" disabled={!parsedReason.success || action.isPending}
+            <button type="button" className="btn btn-ink" disabled={!parsedReason.success || action.isPending}
               onClick={() => action.mutate(
                 { kind: 'reject', reason: parsedReason.data?.reason ?? '', idempotencyKey: rejectKey.current },
                 { onSuccess: () => toast(`Solicitud #${request.id} rechazada`, 'ok', 'La justificación quedó registrada en auditoría.'), onError },
@@ -284,11 +282,11 @@ function AnalystActions({ request }: { request: CreditRequestDTO }) {
           </>
         ) : (
           <>
-            <button type="button" className="btn btn-ghost-danger" onClick={() => setRejecting(true)}>
-              <Icon name="x" size={16} strokeWidth={2.4} /> Rechazar
+            <button type="button" className="btn btn-secondary" onClick={() => setRejecting(true)}>
+              <Icon name="x" size={16} /> Rechazar
             </button>
-            <button type="button" className="btn btn-success" disabled={!bureauReady || insufficient} onClick={() => setConfirming(true)}>
-              <Icon name="check" size={16} strokeWidth={2.4} /> Aprobar
+            <button type="button" className="btn btn-primary" disabled={!bureauReady || insufficient} onClick={() => setConfirming(true)}>
+              <Icon name="check" size={16} /> Aprobar
             </button>
           </>
         )}
@@ -299,7 +297,7 @@ function AnalystActions({ request }: { request: CreditRequestDTO }) {
         title={`¿Aprobar ${formatUSD(request.amountCents)}?`}
         message={<>Se descontará del presupuesto global{budget ? <> (disponible: <b>{formatUSD(budget.availableCents)}</b>)</> : null}. Esta decisión es definitiva.</>}
         confirmLabel="Aprobar"
-        tone="success"
+        tone="primary"
         icon="wallet"
         busy={action.isPending}
         onCancel={() => setConfirming(false)}

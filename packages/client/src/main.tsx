@@ -6,13 +6,21 @@ import { MotionConfig } from 'motion/react';
 import type { Role } from '@guadalupana/shared';
 import { ApiError } from './api/client.ts';
 import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
+import { Splash } from './components/auth.tsx';
 import { Layout } from './components/Layout.tsx';
-import { Spinner, ToastProvider } from './components/ui.tsx';
+import { ToastProvider } from './components/ui.tsx';
+import { AdminAppearancePage } from './pages/admin/AdminAppearancePage.tsx';
+import { AdminOverviewPage } from './pages/admin/AdminOverviewPage.tsx';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage.tsx';
 import { AuditPage } from './pages/AuditPage.tsx';
 import { DashboardPage } from './pages/DashboardPage.tsx';
+import { ForcePasswordChangePage } from './pages/ForcePasswordChangePage.tsx';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { MyRequestsPage } from './pages/MyRequestsPage.tsx';
 import { NewRequestPage } from './pages/NewRequestPage.tsx';
+import { RegisterPage } from './pages/RegisterPage.tsx';
+import { ThemeProvider } from './theme/ThemeProvider.tsx';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/montserrat';
 import './styles.css';
@@ -28,46 +36,60 @@ const queryClient = new QueryClient({
   },
 });
 
-const homeFor = (role: Role) => (role === 'ANALISTA' ? '/panel' : '/solicitudes/nueva');
+const HOME: Record<Role, string> = { SOLICITANTE: '/solicitudes/nueva', ANALISTA: '/panel', ADMIN: '/admin' };
 
-/** Guardas de navegación (solo UX): la autorización real la aplica el servidor. */
-function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
+/** Guardas de navegación (solo experiencia de usuario): la autorización real la aplica el servidor. */
+function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== role) return <Navigate to={homeFor(user.role)} replace />;
+  if (!roles.includes(user.role)) return <Navigate to={HOME[user.role]} replace />;
   return children;
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="boot"><Spinner size={22} /></div>;
+  const { user, splash } = useAuth();
+  const message = user ? `Preparando el espacio de ${user.fullName.split(' ')[0]}…` : 'Cargando…';
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to={homeFor(user.role)} replace /> : <LoginPage />} />
-      <Route element={user ? <Layout /> : <Navigate to="/login" replace />}>
-        <Route path="/solicitudes/nueva" element={<RequireRole role="SOLICITANTE"><NewRequestPage /></RequireRole>} />
-        <Route path="/solicitudes" element={<RequireRole role="SOLICITANTE"><MyRequestsPage /></RequireRole>} />
-        <Route path="/panel" element={<RequireRole role="ANALISTA"><DashboardPage /></RequireRole>} />
-        <Route path="/auditoria" element={<RequireRole role="ANALISTA"><AuditPage /></RequireRole>} />
-      </Route>
-      <Route path="*" element={<Navigate to={user ? homeFor(user.role) : '/login'} replace />} />
-    </Routes>
+    <>
+      <Splash show={splash} message={message} />
+      {splash && !user ? null : user?.mustChangePassword ? (
+        <ForcePasswordChangePage />
+      ) : (
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to={HOME[user.role]} replace /> : <LoginPage />} />
+          <Route path="/registro" element={user ? <Navigate to={HOME[user.role]} replace /> : <RegisterPage />} />
+          <Route path="/recuperar" element={user ? <Navigate to={HOME[user.role]} replace /> : <ForgotPasswordPage />} />
+          <Route element={user ? <Layout /> : <Navigate to="/login" replace />}>
+            <Route path="/solicitudes/nueva" element={<RequireRole roles={['SOLICITANTE']}><NewRequestPage /></RequireRole>} />
+            <Route path="/solicitudes" element={<RequireRole roles={['SOLICITANTE']}><MyRequestsPage /></RequireRole>} />
+            <Route path="/panel" element={<RequireRole roles={['ANALISTA', 'ADMIN']}><DashboardPage /></RequireRole>} />
+            <Route path="/auditoria" element={<RequireRole roles={['ANALISTA', 'ADMIN']}><AuditPage /></RequireRole>} />
+            <Route path="/admin" element={<RequireRole roles={['ADMIN']}><AdminOverviewPage /></RequireRole>} />
+            <Route path="/admin/usuarios" element={<RequireRole roles={['ADMIN']}><AdminUsersPage /></RequireRole>} />
+            <Route path="/admin/apariencia" element={<RequireRole roles={['ADMIN']}><AdminAppearancePage /></RequireRole>} />
+          </Route>
+          <Route path="*" element={<Navigate to={user ? HOME[user.role] : '/login'} replace />} />
+        </Routes>
+      )}
+    </>
   );
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MotionConfig reducedMotion="user">
-        <ToastProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-          </BrowserRouter>
-        </ToastProvider>
-      </MotionConfig>
+      <ThemeProvider>
+        <MotionConfig reducedMotion="user">
+          <ToastProvider>
+            <BrowserRouter>
+              <AuthProvider>
+                <AppRoutes />
+              </AuthProvider>
+            </BrowserRouter>
+          </ToastProvider>
+        </MotionConfig>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

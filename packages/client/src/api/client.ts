@@ -20,7 +20,7 @@ export const setUnauthorizedHandler = (fn: () => void) => {
 
 export async function api<T>(
   path: string,
-  options: { method?: 'GET' | 'POST'; body?: unknown; headers?: Record<string, string> } = {},
+  options: { method?: 'GET' | 'POST' | 'PUT' | 'PATCH'; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<T> {
   let res: Response;
   try {
@@ -41,7 +41,7 @@ export async function api<T>(
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
-    if (res.status === 401 && path !== '/auth/login' && path !== '/auth/me') onUnauthorized();
+    if (res.status === 401 && !path.startsWith('/auth/')) onUnauthorized();
     throw new ApiError(res.status, data as ApiErrorBody | null);
   }
   return data as T;

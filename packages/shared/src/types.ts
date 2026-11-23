@@ -6,6 +6,41 @@ export interface UserDTO {
   username: string;
   fullName: string;
   role: Role;
+  mustChangePassword: boolean;
+}
+
+export interface AdminUserDTO extends UserDTO {
+  isActive: boolean;
+  createdAt: string;
+  pendingReset: boolean;
+}
+
+export interface PasswordResetRequestDTO {
+  id: number;
+  userId: number;
+  username: string;
+  fullName: string;
+  createdAt: string;
+}
+
+export interface AdminAuditDTO {
+  id: number;
+  actor: string;
+  action: string;
+  target: string;
+  detail: string | null;
+  timestamp: string;
+}
+
+export interface AdminOverviewDTO {
+  users: Record<Role, number> & { inactive: number };
+  requests: Record<RequestStatus, { count: number; amountCents: Cents }>;
+  bureau: Record<BureauStatus, number> & { avgAttempts: number };
+  budget: BudgetDTO;
+  auditEntries: number;
+  adminEntries: number;
+  pendingResets: number;
+  system: { node: string; uptimeSeconds: number; dbSizeBytes: number; startedAt: string; schemaVersion: number };
 }
 
 export interface BureauResultDTO {
@@ -58,6 +93,7 @@ export interface ApiErrorBody {
 }
 
 export type ServerEvent =
+  | { type: 'theme.updated' }
   | { type: 'request.updated'; requestId: number; ownerId: number }
   | { type: 'audit.created'; entry: AuditEntryDTO; ownerId: number }
   | { type: 'budget.updated'; budget: BudgetDTO };

@@ -7,15 +7,15 @@ export function AmortizationSummary({ schedule }: { schedule: AmortizationSchedu
   return (
     <div className="summary">
       <div className="summary__hero">
-        <div className="eyebrow">Cuota mensual</div>
+        <div className="label">Cuota mensual</div>
         <div className="summary__value tabular">{formatUSD(schedule.monthlyPaymentCents)}</div>
       </div>
       <div>
-        <div className="eyebrow">Total intereses</div>
+        <div className="label">Total intereses</div>
         <div className="summary__value tabular">{formatUSD(schedule.totalInterestCents)}</div>
       </div>
       <div>
-        <div className="eyebrow">Total a pagar</div>
+        <div className="label">Total a pagar</div>
         <div className="summary__value tabular">{formatUSD(schedule.totalPaymentCents)}</div>
       </div>
     </div>

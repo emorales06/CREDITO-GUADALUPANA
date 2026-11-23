@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ServerEvent } from '@guadalupana/shared';
 import { keys } from '../api/hooks.ts';
+import { themeKey } from '../theme/ThemeProvider.tsx';
 
 export type LiveStatus = 'connecting' | 'live' | 'offline';
 
@@ -23,6 +24,9 @@ export function useServerEvents(enabled: boolean): LiveStatus {
           break;
         case 'audit.created':
           void qc.invalidateQueries({ queryKey: ['audit'] });
+          break;
+        case 'theme.updated':
+          void qc.invalidateQueries({ queryKey: themeKey });
           break;
         case 'budget.updated':
           qc.setQueryData(keys.budget, event.budget);

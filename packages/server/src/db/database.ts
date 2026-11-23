@@ -89,16 +89,83 @@ const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (user_id, idem_key)
   );
   `,
+  // v2 · rol ADMIN, estado de la cuenta, ajustes de apariencia, restablecimientos y auditoría administrativa.
+  // SQLite no permite alterar un CHECK: se reconstruye la tabla con el procedimiento oficial de 12 pasos.
+  `
+  CREATE TABLE users_v2 (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    username             TEXT    NOT NULL UNIQUE,
+    full_name            TEXT    NOT NULL,
+    role                 TEXT    NOT NULL CHECK (role IN ('SOLICITANTE', 'ANALISTA', 'ADMIN')),
+    password_hash        TEXT    NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1)),
+    is_active            INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+    password_changed_at  TEXT    NOT NULL,
+    created_at           TEXT    NOT NULL
+  );
+  INSERT INTO users_v2 (id, username, full_name, role, password_hash, password_changed_at, created_at)
+    SELECT id, username, full_name, role, password_hash, created_at, created_at FROM users;
+  DROP TABLE users;
+  ALTER TABLE users_v2 RENAME TO users;
+
+  CREATE TABLE app_settings (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    theme_json TEXT    NOT NULL,
+    updated_at TEXT    NOT NULL,
+    updated_by INTEGER REFERENCES users(id)
+  );
+
+  CREATE TABLE password_reset_requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    status      TEXT    NOT NULL DEFAULT 'PENDIENTE' CHECK (status IN ('PENDIENTE', 'RESUELTA', 'DESCARTADA')),
+    created_at  TEXT    NOT NULL,
+    resolved_at TEXT,
+    resolved_by INTEGER REFERENCES users(id)
+  );
+  CREATE UNIQUE INDEX uq_reset_pending ON password_reset_requests (user_id) WHERE status = 'PENDIENTE';
+
+  CREATE TABLE admin_audit (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_id       INTEGER REFERENCES users(id),
+    actor_username TEXT    NOT NULL,
+    action         TEXT    NOT NULL,
+    target         TEXT    NOT NULL,
+    detail         TEXT,
+    created_at     TEXT    NOT NULL
+  );
+  CREATE TRIGGER admin_audit_no_update BEFORE UPDATE ON admin_audit
+  BEGIN SELECT RAISE(ABORT, 'admin_audit es inmutable'); END;
+  CREATE TRIGGER admin_audit_no_delete BEFORE DELETE ON admin_audit
+  BEGIN SELECT RAISE(ABORT, 'admin_audit es inmutable'); END;
+  `,
 ];
+
+export const SCHEMA_VERSION = MIGRATIONS.length;
 
 function migrate(db: Db): void {
   const row = db.prepare('PRAGMA user_version').get() as { user_version: number };
-  for (let v = row.user_version; v < MIGRATIONS.length; v++) {
-    inTransaction(db, () => {
-      db.exec(MIGRATIONS[v] as string);
-      db.exec(`PRAGMA user_version = ${v + 1}`);
-    });
+  if (row.user_version >= MIGRATIONS.length) return seedBudget(db);
+
+  // Las claves foráneas se desactivan solo durante la migración (no se puede dentro de una transacción)
+  // y se verifica la integridad referencial antes de confirmar cada paso.
+  db.exec('PRAGMA foreign_keys = OFF;');
+  try {
+    for (let v = row.user_version; v < MIGRATIONS.length; v++) {
+      inTransaction(db, () => {
+        db.exec(MIGRATIONS[v] as string);
+        const broken = db.prepare('PRAGMA foreign_key_check').all();
+        if (broken.length > 0) throw new Error(`Migración ${v + 1}: ${broken.length} referencias rotas`);
+        db.exec(`PRAGMA user_version = ${v + 1}`);
+      });
+    }
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON;');
   }
+  seedBudget(db);
+}
+
+function seedBudget(db: Db): void {
   db.prepare(
     'INSERT OR IGNORE INTO budget (id, total_cents, available_cents, updated_at) VALUES (1, ?, ?, ?)',
   ).run(INITIAL_BUDGET_CENTS, INITIAL_BUDGET_CENTS, new Date().toISOString());
@@ -108,9 +175,9 @@ export function openDatabase(path: string): Db {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
   db.exec('PRAGMA busy_timeout = 5000;');
   migrate(db);
+  db.exec('PRAGMA foreign_keys = ON;');
   return db;
 }
 

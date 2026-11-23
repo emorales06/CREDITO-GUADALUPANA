@@ -34,6 +34,7 @@ interface NewRequestBody {
 }
 
 const PASSWORDS: Record<string, string> = {
+  admin: 'Admin2026!',
   'ana.lopez': 'Analista2026!',
   'carlos.mendez': 'Analista2026!',
   'juan.perez': 'Socio2026!',

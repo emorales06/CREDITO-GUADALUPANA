@@ -1,5 +1,11 @@
-export const ROLES = ['SOLICITANTE', 'ANALISTA'] as const;
+export const ROLES = ['SOLICITANTE', 'ANALISTA', 'ADMIN'] as const;
 export type Role = (typeof ROLES)[number];
+
+export const ROLE_LABELS: Readonly<Record<Role, string>> = {
+  SOLICITANTE: 'Solicitante',
+  ANALISTA: 'Analista',
+  ADMIN: 'Administrador',
+};
 
 export const REQUEST_STATUSES = ['CREADA', 'EN_REVISION', 'APROBADA', 'RECHAZADA'] as const;
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];

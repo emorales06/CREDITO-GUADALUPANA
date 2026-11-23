@@ -7,7 +7,7 @@ Aplicación Full-Stack (TypeScript estricto) para registrar solicitudes de créd
 | Frontend | React 19 + Vite, TanStack Query, React Router, Motion |
 | Backend | Node.js + Express 5, validación con **Zod** |
 | Persistencia | **SQLite** (módulo nativo `node:sqlite`, modo WAL) |
-| Pruebas | `node:test` (25 pruebas unitarias y de integración HTTP) |
+| Pruebas | `node:test` (32 pruebas unitarias y de integración HTTP) |
 | Dominio compartido | Paquete `@guadalupana/shared`: reglas, esquemas Zod, máquina de estados y amortización, usados **por el frontend y el backend** |
 
 ---
@@ -40,7 +40,7 @@ npm run dev        # abrir http://localhost:5173
 Otros comandos:
 
 ```bash
-npm test           # 25 pruebas automatizadas
+npm test           # 32 pruebas automatizadas
 npm run typecheck  # tsc --noEmit en los tres paquetes
 ```
 
@@ -52,10 +52,13 @@ La pantalla de inicio de sesión tiene un **selector de usuarios de prueba** (un
 
 | Usuario | Contraseña | Rol |
 | --- | --- | --- |
+| `admin` | `Admin2026!` | Administrador (apariencia, usuarios, resumen del sistema) |
 | `ana.lopez` | `Analista2026!` | Analista |
 | `carlos.mendez` | `Analista2026!` | Analista (útil para probar dos analistas a la vez) |
 | `juan.perez` | `Socio2026!` | Solicitante |
 | `maria.garcia` | `Socio2026!` | Solicitante |
+
+También se puede **crear una cuenta** desde el login (siempre como Solicitante) y usar **¿Olvidó su contraseña?**.
 
 Datos de ejemplo útiles: el DPI `2233445566778` tiene un rechazo reciente (la regla de 30 días bloquea una solicitud nueva) y `2547896320101` tiene una solicitud pendiente.
 
@@ -67,6 +70,24 @@ Datos de ejemplo útiles: el DPI `2233445566778` tiene un rechazo reciente (la r
 2. Al enviar, la solicitud aparece con el buró en **“Consultando…”**; si el servicio responde 503 se ve el número de intento (*intento 2/4*). Se puede seguir navegando.
 3. **Analista** (otra ventana o navegador) → *Panel*: aparece la solicitud nueva sin recargar. *Tomar en revisión* → espera del buró → *Aprobar*. El presupuesto baja con animación en todas las sesiones abiertas.
 4. *Auditoría*: cada transición con usuario, rol, marca ISO 8601, estado anterior/nuevo y comentario, en tiempo real.
+
+---
+
+## Roles y cuentas
+
+| Rol | Puede | No puede |
+| --- | --- | --- |
+| Solicitante | Crear y consultar **sus** solicitudes | Ver solicitudes ajenas, auditoría, presupuesto |
+| Analista | Revisar, aprobar, rechazar, ver auditoría y presupuesto | Administrar usuarios o apariencia |
+| Administrador | Resumen detallado del sistema, usuarios (alta, rol, activar/desactivar, contraseñas temporales), apariencia (colores, logo, tamaño, botones, densidad, encabezado), consultar solicitudes y auditoría | **Aprobar o rechazar** (segregación de funciones) |
+
+Todos los permisos se verifican **en el servidor** (`requireRole` en cada ruta). La interfaz solo oculta lo que ya está prohibido; quitarlo del menú no da acceso.
+
+- **Registro público:** siempre crea un Solicitante. El esquema es estricto, así que enviar `role` provoca un `400`. Contraseña de 10 caracteres o más, con letra, número y símbolo.
+- **Olvido de contraseña:** sin correo en el sistema, la recuperación es asistida. La solicitud llega al administrador, que emite una **contraseña temporal** que se muestra una sola vez. Al entrar, el servidor bloquea toda la API (`403 PASSWORD_CHANGE_REQUIRED`) hasta que el usuario la cambie. La respuesta es idéntica exista o no la cuenta.
+- **Cambio de contraseña, desactivación o cambio de rol:** invalidan de inmediato las sesiones abiertas de ese usuario.
+- **Apariencia:** el tema se guarda en la base, se valida en el servidor (contraste WCAG mínimo y logo solo PNG/JPG/WEBP de hasta 300 KB; **SVG rechazado** porque puede contener scripts) y se publica en tiempo real a todos los usuarios conectados.
+- **Bitácora administrativa** (`admin_audit`): registra altas, cambios de rol y estado, contraseñas y apariencia. Es inmutable por triggers, igual que la auditoría de solicitudes.
 
 ---
 
@@ -161,10 +182,23 @@ Las actualizaciones van en un solo sentido (servidor → cliente), así que SSE 
 ✔ API: permisos en servidor, validación y auditoría
 ✔ Resiliencia del cliente de Buró Crediticio (reintentos, backoff, sin reintentar 4xx)
 ✔ Reglas: 40 %, historial de 30 días, máquina de estados, motivo ≥ 15, amortización
-ℹ tests 25 · pass 25 · fail 0
+ℹ tests 32 · pass 32 · fail 0
 ```
 
 Las pruebas de integración levantan la API real sobre un puerto efímero con una BD en memoria y un buró falso instantáneo (inyectado por el composition root).
+
+## Revisión de seguridad e integridad
+
+Verificado con pruebas automatizadas (32) y revisión manual:
+
+- Contraseñas con scrypt y sal. Sesión HttpOnly + SameSite=Strict firmada con HMAC, con versión ligada al último cambio de credenciales.
+- Límites de intentos: inicio de sesión (por usuario y por IP), registro y recuperación (por IP).
+- Cuerpos JSON de 16 KB como máximo. Solo `PUT /api/admin/settings/theme` admite 512 KB por el logo, y exige sesión de administrador.
+- El último administrador activo no puede quitarse el rol ni desactivarse (evita quedar sin acceso).
+- La migración v1 → v2 reconstruye la tabla de usuarios con `PRAGMA foreign_key_check` dentro de la transacción. Se probó sobre una copia de una base con datos.
+- `npm audit`: 0 vulnerabilidades.
+
+**Antes de producción:** quitar los botones de usuarios de prueba del login, cambiar la contraseña del `admin` sembrado, definir `SESSION_SECRET` y `COOKIE_SECURE=true` detrás de HTTPS. El bloqueo de 5 intentos fallidos por usuario puede usarse para bloquear a otro a propósito; en producción convendría añadir CAPTCHA o un retraso progresivo.
 
 ## Mejoras con más tiempo
 - PostgreSQL con migraciones versionadas y `SELECT … FOR UPDATE`.

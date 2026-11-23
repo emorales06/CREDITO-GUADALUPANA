@@ -31,6 +31,14 @@ export const requireRole =
     next();
   };
 
+/** Una cuenta con contraseña temporal solo puede cambiarla; el resto de la API queda bloqueado en el servidor. */
+export const requireFreshPassword: RequestHandler = (_req, res, next) => {
+  if (res.locals.user?.mustChangePassword) {
+    throw new AppError(403, 'PASSWORD_CHANGE_REQUIRED', 'Debe cambiar su contraseña temporal antes de continuar');
+  }
+  next();
+};
+
 export function currentUser(res: Response): UserDTO {
   const user = res.locals.user;
   if (!user) throw new AppError(401, 'UNAUTHORIZED', 'Debe iniciar sesión');

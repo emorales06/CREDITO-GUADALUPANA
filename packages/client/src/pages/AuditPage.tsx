@@ -34,7 +34,6 @@ export function AuditPage() {
       <section className="card" style={{ overflow: 'hidden' }}>
         <div className="card-head">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="group__icon"><Icon name="shield" size={16} /></span>
             <h2 className="title-3">Eventos</h2>
           </div>
           <span className="muted small">{entries.length} registro{entries.length === 1 ? '' : 's'} · solo lectura</span>

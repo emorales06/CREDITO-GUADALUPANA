@@ -2,9 +2,11 @@ import { buildAmortizationSchedule, type Role, type UserDTO } from '@guadalupana
 import type { Container } from '../container.ts';
 import { ratingFor, scoreFor } from '../http/mock-bureau.ts';
 import { hashPassword } from '../services/auth.service.ts';
+import { toPublicUser } from '../repositories/users.repository.ts';
 import { inTransaction } from './database.ts';
 
 export const DEMO_USERS: ReadonlyArray<{ username: string; fullName: string; role: Role; password: string }> = [
+  { username: 'admin', fullName: 'Administración General', role: 'ADMIN', password: 'Admin2026!' },
   { username: 'ana.lopez', fullName: 'Ana López', role: 'ANALISTA', password: 'Analista2026!' },
   { username: 'carlos.mendez', fullName: 'Carlos Méndez', role: 'ANALISTA', password: 'Analista2026!' },
   { username: 'juan.perez', fullName: 'Juan Pérez', role: 'SOLICITANTE', password: 'Socio2026!' },
@@ -15,7 +17,7 @@ export function seedUsers(c: Container): void {
   const now = new Date().toISOString();
   for (const u of DEMO_USERS) {
     if (!c.users.findByUsername(u.username)) {
-      c.users.insert({ username: u.username, fullName: u.fullName, role: u.role, passwordHash: hashPassword(u.password) }, now);
+      c.users.insert({ username: u.username, fullName: u.fullName, role: u.role, passwordHash: hashPassword(u.password), mustChangePassword: false }, now);
     }
   }
 }
@@ -28,7 +30,7 @@ export function seedDemoRequests(c: Container): void {
   const user = (username: string): UserDTO => {
     const found = c.users.findByUsername(username);
     if (!found) throw new Error(`Usuario demo ${username} no existe`);
-    return { id: found.id, username: found.username, fullName: found.fullName, role: found.role };
+    return toPublicUser(found);
   };
   const juan = user('juan.perez');
   const maria = user('maria.garcia');

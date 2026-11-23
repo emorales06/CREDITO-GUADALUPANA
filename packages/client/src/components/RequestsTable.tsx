@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { formatUSD, type CreditRequestDTO } from '@guadalupana/shared';
-import { BureauIndicator, EmptyState, SkeletonRows, StatusBadge, easeOut, formatDate, initials } from './ui.tsx';
+import { BureauIndicator, EmptyState, SkeletonRows, StatusBadge, easeOut, formatDate } from './ui.tsx';
 
 export function RequestsTable({ requests, loading, onOpen, showOwner = false, emptyTitle, emptyText }: {
   requests: CreditRequestDTO[] | undefined;
@@ -40,10 +40,7 @@ export function RequestsTable({ requests, loading, onOpen, showOwner = false, em
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(r.id)}>
                 <td className="cell-id tabular">{r.id}</td>
                 <td>
-                  <span className="cell-person">
-                    <span className="avatar hide-sm" aria-hidden="true">{initials(r.applicantName)}</span>
-                    {r.applicantName}
-                  </span>
+                  <span className="cell-strong">{r.applicantName}</span>
                 </td>
                 <td className="mono muted hide-sm">{r.documentId}</td>
                 {showOwner && <td className="muted hide-sm">{r.ownerName}</td>}
