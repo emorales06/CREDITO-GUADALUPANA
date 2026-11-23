@@ -35,7 +35,7 @@ export function RegisterPage() {
   return (
     <AuthShell>
       <h2 className="large-title" style={{ margin: '0 0 6px' }}>Crear una cuenta</h2>
-      <p className="muted" style={{ margin: '0 0 22px' }}>Las cuentas nuevas pueden registrar y consultar sus solicitudes de crédito.</p>
+      <p className="muted" style={{ margin: '0 0 22px' }}>Después de registrarse, un administrador revisará su cuenta y le asignará un rol para que pueda ingresar.</p>
 
       <form onSubmit={onSubmit} className="grid" style={{ gap: 14 }} noValidate>
         {errors.form && <Banner tone="error">{errors.form}</Banner>}

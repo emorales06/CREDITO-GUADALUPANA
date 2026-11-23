@@ -82,16 +82,16 @@ export class AuthService {
     return { user: toPublicUser(user), token: this.#issue(user.id) };
   }
 
-  /** Alta pública: siempre crea un SOLICITANTE. El rol nunca viene del cliente. */
+  /** Alta pública: la cuenta nace SIN rol; un administrador decide cuál asignarle. El cliente nunca elige. */
   register(input: RegisterInput): { user: UserDTO; token: string } {
     const now = this.#d.clock().toISOString();
     try {
       const id = inTransaction(this.#d.db, () => {
         const newId = this.#d.users.insert(
-          { username: input.username, fullName: input.fullName, role: 'SOLICITANTE', passwordHash: hashPassword(input.password), mustChangePassword: false },
+          { username: input.username, fullName: input.fullName, role: null, passwordHash: hashPassword(input.password), mustChangePassword: false },
           now,
         );
-        this.#d.adminAudit.append({ id: newId, username: input.username }, 'REGISTRO', `usuario:${input.username}`, 'Alta pública como solicitante', now);
+        this.#d.adminAudit.append({ id: newId, username: input.username }, 'REGISTRO', `usuario:${input.username}`, 'Alta pública: pendiente de asignación de rol', now);
         return newId;
       });
       const user = this.#d.users.findById(id);

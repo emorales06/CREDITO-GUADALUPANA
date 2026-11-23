@@ -139,6 +139,23 @@ const MIGRATIONS: readonly string[] = [
   CREATE TRIGGER admin_audit_no_delete BEFORE DELETE ON admin_audit
   BEGIN SELECT RAISE(ABORT, 'admin_audit es inmutable'); END;
   `,
+  // v3 · las cuentas registradas por el público nacen sin rol hasta que un administrador lo asigna.
+  `
+  CREATE TABLE users_v3 (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    username             TEXT    NOT NULL UNIQUE,
+    full_name            TEXT    NOT NULL,
+    role                 TEXT    CHECK (role IS NULL OR role IN ('SOLICITANTE', 'ANALISTA', 'ADMIN')),
+    password_hash        TEXT    NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1)),
+    is_active            INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+    password_changed_at  TEXT    NOT NULL,
+    created_at           TEXT    NOT NULL
+  );
+  INSERT INTO users_v3 SELECT id, username, full_name, role, password_hash, must_change_password, is_active, password_changed_at, created_at FROM users;
+  DROP TABLE users;
+  ALTER TABLE users_v3 RENAME TO users;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

@@ -18,7 +18,7 @@ import {
   type UserDTO,
 } from '@guadalupana/shared';
 import type { Container } from '../container.ts';
-import { SESSION_COOKIE, authenticate, currentUser, requireFreshPassword, requireRole } from './middleware.ts';
+import { SESSION_COOKIE, authenticate, currentUser, requireAssignedRole, requireFreshPassword, requireRole } from './middleware.ts';
 
 const listQuery = z.object({ status: z.enum(REQUEST_STATUSES).optional() });
 const auditQuery = z.object({ requestId: idSchema.optional(), limit: z.coerce.number().int().min(1).max(1000).optional() });
@@ -93,6 +93,7 @@ export function apiRouter(c: Container): Router {
   const r = Router();
   r.use(authenticate(c.auth));
   r.use(requireFreshPassword);
+  r.use(requireAssignedRole);
 
   const sendDecision = (res: Response, result: { request: unknown; replayed: boolean }) => {
     if (result.replayed) res.setHeader('Idempotent-Replayed', 'true');

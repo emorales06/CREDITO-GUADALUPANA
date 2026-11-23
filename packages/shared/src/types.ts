@@ -5,7 +5,8 @@ export interface UserDTO {
   id: number;
   username: string;
   fullName: string;
-  role: Role;
+  /** null = cuenta registrada que espera a que un administrador le asigne un rol. */
+  role: Role | null;
   mustChangePassword: boolean;
 }
 
@@ -33,7 +34,7 @@ export interface AdminAuditDTO {
 }
 
 export interface AdminOverviewDTO {
-  users: Record<Role, number> & { inactive: number };
+  users: Record<Role, number> & { inactive: number; pending: number };
   requests: Record<RequestStatus, { count: number; amountCents: Cents }>;
   bureau: Record<BureauStatus, number> & { avgAttempts: number };
   budget: BudgetDTO;

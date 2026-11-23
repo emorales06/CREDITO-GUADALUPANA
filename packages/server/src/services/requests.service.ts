@@ -22,6 +22,9 @@ import type { BureauService } from './bureau/bureau.service.ts';
 import type { Clock } from './clock.ts';
 import type { EventBus } from './event-bus.ts';
 
+/** Lista blanca: cualquier rol desconocido o ausente ve solo lo propio. */
+const canSeeAll = (actor: UserDTO) => actor.role === 'ANALISTA' || actor.role === 'ADMIN';
+
 export interface RequestsServiceDeps {
   db: Db;
   requests: RequestsRepository;
@@ -97,13 +100,13 @@ export class RequestsService {
   }
 
   list(actor: UserDTO, status?: RequestStatus): CreditRequestDTO[] {
-    return this.#d.requests.list({ ownerId: actor.role === 'SOLICITANTE' ? actor.id : undefined, status });
+    return this.#d.requests.list({ ownerId: canSeeAll(actor) ? undefined : actor.id, status });
   }
 
   /** Un solicitante solo ve sus solicitudes; para las ajenas responde 404 (no revela que existen). */
   getForActor(actor: UserDTO, id: number): CreditRequestDTO {
     const request = this.#d.requests.findById(id);
-    if (!request || (actor.role === 'SOLICITANTE' && request.ownerId !== actor.id)) throw notFound('Solicitud no encontrada');
+    if (!request || (!canSeeAll(actor) && request.ownerId !== actor.id)) throw notFound('Solicitud no encontrada');
     return request;
   }
 

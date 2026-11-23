@@ -22,10 +22,15 @@ export function AdminUsersPage() {
   const [query, setQuery] = useState('');
 
   const visible = (users ?? []).filter((u) => `${u.fullName} ${u.username}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const awaiting = (users ?? []).filter((u) => u.role === null && u.isActive);
   const onError = (e: Error) => toast('No se pudo completar la acción', 'error', e.message);
 
   const changeRole = (u: AdminUserDTO, role: Role) =>
-    update.mutate({ id: u.id, changes: { role } }, { onSuccess: () => toast(`${u.fullName} ahora es ${ROLE_LABELS[role].toLowerCase()}`), onError });
+    update.mutate({ id: u.id, changes: { role } }, {
+      onSuccess: () => toast(u.role === null ? `${u.fullName} ya puede ingresar` : `${u.fullName} ahora es ${ROLE_LABELS[role].toLowerCase()}`, 'ok',
+        u.role === null ? `Rol asignado: ${ROLE_LABELS[role]}. Su pantalla de espera se actualizará sola.` : undefined),
+      onError,
+    });
   const toggleActive = (u: AdminUserDTO) =>
     update.mutate({ id: u.id, changes: { isActive: !u.isActive } }, {
       onSuccess: () => toast(u.isActive ? `${u.fullName} fue desactivado` : `${u.fullName} fue activado`, 'ok', u.isActive ? 'Sus sesiones abiertas se cerraron.' : undefined),
@@ -43,6 +48,27 @@ export function AdminUsersPage() {
         </div>
         <button type="button" className="btn btn-light" onClick={() => setCreating(true)}><Icon name="plus" /> Nuevo usuario</button>
       </div>
+
+      {awaiting.length > 0 && (
+        <section className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+          <div className="card-head">
+            <div>
+              <h2 className="title-3">Cuentas por aprobar</h2>
+              <span className="muted small">Se registraron solas y esperan un rol para poder ingresar.</span>
+            </div>
+            <span className="tag tag--accent">{awaiting.length} en espera</span>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Usuario</th><th className="hide-sm">Registro</th><th>Rol a asignar</th><th className="num">Acción</th></tr></thead>
+              <tbody>
+                {awaiting.map((u) => <AwaitingRow key={u.id} user={u} busy={update.isPending}
+                  onAssign={(role) => changeRole(u, role)} onReject={() => toggleActive(u)} />)}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {resets && resets.length > 0 && (
         <section className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
@@ -93,13 +119,14 @@ export function AdminUsersPage() {
                           <span className="avatar" style={{ width: 30, height: 30, fontSize: '0.65rem' }} aria-hidden="true">{initials(u.fullName)}</span>
                           <div>
                             <div className="cell-strong">{u.fullName} {self && <span className="tag">usted</span>}</div>
-                            <div className="muted small">@{u.username}{u.mustChangePassword ? ' · debe cambiar contraseña' : ''}{u.pendingReset ? ' · pidió restablecer' : ''}</div>
+                            <div className="muted small">@{u.username}{u.role === null ? ' · esperando rol' : ''}{u.mustChangePassword ? ' · debe cambiar contraseña' : ''}{u.pendingReset ? ' · pidió restablecer' : ''}</div>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <select className="input" style={{ height: 36, minHeight: 36, width: 150 }} value={u.role} disabled={update.isPending}
+                        <select className="input" style={{ height: 36, minHeight: 36, width: 150 }} value={u.role ?? ''} disabled={update.isPending}
                           aria-label={`Rol de ${u.fullName}`} onChange={(e) => changeRole(u, e.target.value as Role)}>
+                          {u.role === null && <option value="" disabled>Sin asignar</option>}
                           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                         </select>
                       </td>
@@ -129,6 +156,28 @@ export function AdminUsersPage() {
         onCreated={(username, password) => { setCreating(false); setSecret({ username, password, reason: 'Cuenta creada' }); }} />
       <SecretDialog secret={secret} onClose={() => setSecret(null)} />
     </main>
+  );
+}
+
+function AwaitingRow({ user, busy, onAssign, onReject }: {
+  user: AdminUserDTO; busy: boolean; onAssign: (role: Role) => void; onReject: () => void;
+}) {
+  const [role, setRole] = useState<Role>('SOLICITANTE');
+  return (
+    <tr>
+      <td><span className="cell-strong">{user.fullName}</span> <span className="muted small">@{user.username}</span></td>
+      <td className="muted hide-sm">{formatDateTime(user.createdAt)}</td>
+      <td>
+        <select className="input" style={{ height: 36, minHeight: 36, width: 160 }} value={role}
+          aria-label={`Rol para ${user.fullName}`} onChange={(e) => setRole(e.target.value as Role)}>
+          {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+        </select>
+      </td>
+      <td className="num" style={{ whiteSpace: 'nowrap' }}>
+        <button type="button" className="btn btn-plain btn-sm" disabled={busy} onClick={onReject}>Rechazar</button>
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => onAssign(role)}>Asignar rol</button>
+      </td>
+    </tr>
   );
 }
 

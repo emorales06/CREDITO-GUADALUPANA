@@ -27,7 +27,7 @@ export const requireRole =
   (...roles: Role[]): RequestHandler =>
   (_req, res, next) => {
     const user = res.locals.user;
-    if (!user || !roles.includes(user.role)) throw forbidden();
+    if (!user || user.role === null || !roles.includes(user.role)) throw forbidden();
     next();
   };
 
@@ -35,6 +35,14 @@ export const requireRole =
 export const requireFreshPassword: RequestHandler = (_req, res, next) => {
   if (res.locals.user?.mustChangePassword) {
     throw new AppError(403, 'PASSWORD_CHANGE_REQUIRED', 'Debe cambiar su contraseña temporal antes de continuar');
+  }
+  next();
+};
+
+/** Una cuenta sin rol asignado no puede usar la API; solo esperar la aprobación. */
+export const requireAssignedRole: RequestHandler = (_req, res, next) => {
+  if (res.locals.user && res.locals.user.role === null) {
+    throw new AppError(403, 'ROLE_PENDING', 'Su cuenta está pendiente de que un administrador le asigne un rol');
   }
   next();
 };

@@ -4,7 +4,7 @@ import { formatUSD, type RequestStatus } from '@guadalupana/shared';
 import { useBudget, useRequests } from '../api/hooks.ts';
 import { RequestSheet } from '../components/RequestSheet.tsx';
 import { RequestsTable } from '../components/RequestsTable.tsx';
-import { AnimatedMoney, Banner, Segmented, Stripes, spring } from '../components/ui.tsx';
+import { AnimatedMoney, Banner, Segmented, spring } from '../components/ui.tsx';
 import { useSelectedRequest } from './MyRequestsPage.tsx';
 
 type Filter = 'TODAS' | RequestStatus;
@@ -51,7 +51,6 @@ export function DashboardPage() {
       </div>
 
       <motion.section className="budget" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={spring} aria-label="Presupuesto global">
-        <Stripes />
         <div className="budget__main">
           <span className="budget__label">Presupuesto disponible</span>
           <div className="budget__amount">{budget ? <AnimatedMoney cents={budget.availableCents} /> : '—'}</div>

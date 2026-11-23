@@ -59,6 +59,10 @@ export function AdminOverviewPage() {
               <h3>Usuarios</h3>
               <dl>
                 {ROLES.map((r) => <div key={r}><dt>{ROLE_LABELS[r]}</dt><dd>{o.users[r]}</dd></div>)}
+                <div>
+                  <dt>Esperando rol</dt>
+                  <dd>{o.users.pending > 0 ? <Link to="/admin/usuarios">{o.users.pending} por aprobar</Link> : 0}</dd>
+                </div>
                 <div><dt>Inactivos</dt><dd>{o.users.inactive}</dd></div>
                 <div>
                   <dt>Restablecimientos pendientes</dt>

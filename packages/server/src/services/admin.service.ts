@@ -105,12 +105,14 @@ export class AdminService {
       }
 
       this.#d.users.update(id, input);
-      // Un cambio de rol o una desactivación cierra las sesiones abiertas de ese usuario.
-      if ((input.role && input.role !== target.role) || input.isActive === false) this.#d.users.revokeSessions(id, now);
+      // Cambiar un rol existente o desactivar cierra las sesiones abiertas. Asignar el primer rol no:
+      // el usuario que espera en la pantalla de aprobación entra sin volver a iniciar sesión.
+      const roleChanged = input.role !== undefined && target.role !== null && input.role !== target.role;
+      if (roleChanged || input.isActive === false) this.#d.users.revokeSessions(id, now);
 
       const detail = [
         input.fullName && input.fullName !== target.fullName ? `nombre: ${target.fullName} → ${input.fullName}` : null,
-        input.role && input.role !== target.role ? `rol: ${ROLE_LABELS[target.role]} → ${ROLE_LABELS[input.role]}` : null,
+        input.role && input.role !== target.role ? `rol: ${target.role ? ROLE_LABELS[target.role] : 'sin asignar'} → ${ROLE_LABELS[input.role]}` : null,
         input.isActive !== undefined && input.isActive !== target.isActive ? (input.isActive ? 'activado' : 'desactivado') : null,
       ].filter(Boolean).join(' · ');
       this.#d.adminAudit.append(actor, 'USUARIO_ACTUALIZADO', `usuario:${target.username}`, detail || 'Sin cambios', now);
@@ -152,9 +154,10 @@ export class AdminService {
 
   overview(): AdminOverviewDTO {
     const db = this.#d.db;
-    const users = { SOLICITANTE: 0, ANALISTA: 0, ADMIN: 0, inactive: 0 };
+    const users = { SOLICITANTE: 0, ANALISTA: 0, ADMIN: 0, inactive: 0, pending: 0 };
     for (const r of this.#d.users.countByRole()) {
-      users[r.role] = r.active;
+      if (r.role === null) users.pending = r.active;
+      else users[r.role] = r.active;
       users.inactive += r.inactive;
     }
 

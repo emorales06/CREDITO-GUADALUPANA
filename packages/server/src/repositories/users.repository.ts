@@ -5,7 +5,7 @@ interface UserRow {
   id: number;
   username: string;
   full_name: string;
-  role: Role;
+  role: Role | null;
   password_hash: string;
   must_change_password: number;
   is_active: number;
@@ -44,7 +44,7 @@ export const toPublicUser = (u: UserRecord): UserDTO => ({
 export interface NewUser {
   username: string;
   fullName: string;
-  role: Role;
+  role: Role | null;
   passwordHash: string;
   mustChangePassword: boolean;
 }
@@ -123,8 +123,8 @@ export class UsersRepository {
     return queryOne<{ n: number }>(this.#db, "SELECT COUNT(*) AS n FROM users WHERE role = 'ADMIN' AND is_active = 1")?.n ?? 0;
   }
 
-  countByRole(): { role: Role; active: number; inactive: number }[] {
-    return queryAll<{ role: Role; active: number; inactive: number }>(
+  countByRole(): { role: Role | null; active: number; inactive: number }[] {
+    return queryAll<{ role: Role | null; active: number; inactive: number }>(
       this.#db,
       'SELECT role, SUM(is_active) AS active, SUM(1 - is_active) AS inactive FROM users GROUP BY role',
     );

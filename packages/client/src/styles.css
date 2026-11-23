@@ -313,8 +313,6 @@ select.input { appearance: none; padding-right: 36px; background-image: linear-g
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 22px 40px; align-items: end;
   background: var(--grad-brand); box-shadow: var(--shadow-lg);
 }
-.budget .stripes { right: 20px; top: 18px; width: 240px; height: 80px; opacity: 0.55; }
-.budget > :not(.stripes) { position: relative; }
 .budget__label { font-size: 0.875rem; font-weight: 500; color: var(--on-brand-2); }
 .budget__amount { font-size: clamp(2.3rem, 4.6vw, 3.25rem); line-height: 1; margin: 8px 0; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .budget__sub { font-size: 0.875rem; color: var(--on-brand-2); }
@@ -506,7 +504,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   .budget__facts { display: grid; gap: 10px; }
   .budget__facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .budget__facts dd { margin: 0; text-align: right; }
-  .hero-band .stripes, .budget .stripes { display: none; }
+  .hero-band .stripes { display: none; }
   .demo-users { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
@@ -523,3 +521,11 @@ table.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   .spinner { animation-duration: 1.4s; }
   .btn:active:not(:disabled), .demo-user:active, .icon-btn:active, .btn:hover:not(:disabled) { transform: none; }
 }
+
+/* ═════════════ Cuenta en espera de rol ═════════════ */
+.pending-mark { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--accent); background: var(--brand-50); }
+.pending-mark__ring { position: absolute; inset: -3px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--accent); }
+.pending-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pending-steps li { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text-3); }
+.pending-steps li.done { color: var(--brand); font-weight: 600; }
+.pending-steps li.active { color: var(--accent); font-weight: 600; }

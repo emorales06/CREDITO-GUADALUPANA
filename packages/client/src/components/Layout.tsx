@@ -47,7 +47,8 @@ export function Layout() {
     };
   }, [menuOpen]);
 
-  if (!user) return null;
+  if (!user || user.role === null) return null;
+  const role = user.role;
   const onBrandHeader = theme.headerStyle === 'marca';
   const headerLogo = onBrandHeader ? logoOnBrand.src : logo;
 
@@ -66,7 +67,7 @@ export function Layout() {
           <img src={headerLogo} alt="Cooperativa Guadalupana" className="brand-logo"
             style={onBrandHeader && logoOnBrand.custom ? { background: '#fff', padding: 4, borderRadius: 8 } : undefined} />
           <nav className="nav" aria-label="Principal">
-            {LINKS[user.role].map((l) => (
+            {LINKS[role].map((l) => (
               <NavLink key={l.to} to={l.to} end title={l.label}>
                 <Icon name={l.icon} size={17} /> <span className="nav__label">{l.label}</span>
               </NavLink>
@@ -77,7 +78,7 @@ export function Layout() {
               <span className="avatar" aria-hidden="true">{initials(user.fullName)}</span>
               <span className="user-menu__meta">
                 <span className="user-menu__name">{user.fullName}</span>
-                <span className="user-menu__role">{ROLE_LABELS[user.role]}</span>
+                <span className="user-menu__role">{ROLE_LABELS[role]}</span>
               </span>
               <Icon name="chevron" size={16} />
             </button>

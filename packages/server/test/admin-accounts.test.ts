@@ -36,7 +36,7 @@ describe('Administración, cuentas y contraseñas', () => {
     assert.equal(approve.status, 403);
   });
 
-  it('el registro público siempre crea un SOLICITANTE y rechaza intentos de elegir rol', async () => {
+  it('el registro público crea la cuenta sin rol y rechaza intentos de elegirlo', async () => {
     const base = { fullName: 'Lucía Tzoc', username: 'lucia.tzoc', password: 'Ahorro#2026x', confirmPassword: 'Ahorro#2026x' };
     const escalation = await t.api('POST', '/api/auth/register', { body: { ...base, role: 'ADMIN' } });
     assert.equal(escalation.status, 400, 'un campo extra como "role" se rechaza');
@@ -46,11 +46,32 @@ describe('Administración, cuentas y contraseñas', () => {
 
     const ok = await t.api('POST', '/api/auth/register', { body: base });
     assert.equal(ok.status, 201);
-    assert.equal((await json<{ user: UserDTO }>(ok)).user.role, 'SOLICITANTE');
+    assert.equal((await json<{ user: UserDTO }>(ok)).user.role, null);
     assert.equal((await t.api('GET', '/api/admin/users', { cookie: cookieOf(ok) })).status, 403);
 
     const duplicate = await t.api('POST', '/api/auth/register', { body: base });
     assert.equal(duplicate.status, 422);
+  });
+
+  it('una cuenta sin rol solo espera: la API la bloquea hasta que el admin asigna un rol, sin cerrar su sesión', async () => {
+    const body = { fullName: 'Rafael Coc', username: 'rafael.coc', password: 'Espera#2026x', confirmPassword: 'Espera#2026x' };
+    const session = cookieOf(await t.api('POST', '/api/auth/register', { body }));
+
+    const blocked = await t.api('GET', '/api/requests', { cookie: session });
+    assert.equal(blocked.status, 403);
+    assert.equal((await json<{ error: { code: string } }>(blocked)).error.code, 'ROLE_PENDING');
+    assert.equal((await t.api('GET', '/api/auth/me', { cookie: session })).status, 200, 'puede consultar su estado');
+
+    const { users } = await json<{ users: AdminUserDTO[] }>(await t.api('GET', '/api/admin/users', { cookie: admin }));
+    const pending = users.find((u) => u.username === 'rafael.coc');
+    assert.ok(pending);
+    assert.equal(pending.role, null);
+
+    const assign = await t.api('PATCH', `/api/admin/users/${pending.id}`, { cookie: admin, body: { role: 'SOLICITANTE' } });
+    assert.equal(assign.status, 200);
+    const me = await json<{ user: UserDTO }>(await t.api('GET', '/api/auth/me', { cookie: session }));
+    assert.equal(me.user.role, 'SOLICITANTE', 'la misma sesión sigue válida');
+    assert.equal((await t.api('GET', '/api/requests', { cookie: session })).status, 200);
   });
 
   it('olvido de contraseña: misma respuesta exista o no el usuario; el admin la resuelve con una temporal', async () => {
